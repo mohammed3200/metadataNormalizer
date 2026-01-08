@@ -1,0 +1,16 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-08\n"
+"PO-Revision-Date: 2026-01-08\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "plugins.generic.metadataNormalizer.displayName"
+msgstr "Metadata Normalizer"
+
+msgid "plugins.generic.metadataNormalizer.description"
+msgstr "Automatically normalizes submission metadata (keywords, title, abstract) by removing HTML tags, line breaks, and extra whitespace. Converts Arabic commas in keywords, removes duplicates, and ensures clean metadata for indexing services like Crossref, Google Scholar, and OAI-PMH harvesters."
