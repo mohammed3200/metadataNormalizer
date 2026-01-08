@@ -1,11 +1,3 @@
-/**
- * UNIFIED METADATA NORMALIZER PLUGIN FOR OJS 3.5.0
- * Complete Production-Ready Package
- * 
- * FILE 1: MetadataNormalizerPlugin.php
- * Main plugin class with hook registration
- */
-
 <?php
 
 /**
@@ -24,6 +16,7 @@
  * - Removal of copy-paste artifacts and formatting issues
  * - Improved discoverability and metadata quality
  */
+
 
 namespace APP\plugins\generic\metadataNormalizer;
 
