@@ -1,0 +1,16 @@
+
+# Release files
+*.tar.gz
+*.zip
+
+# Node.js files
+node_modules
+package-lock.json
+package.json
+
+
+# editor files
+.vscode
+
+# .env files
+.env
