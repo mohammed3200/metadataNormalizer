@@ -14,6 +14,23 @@
 (function () {
   "use strict";
 
+  // State
+  let Shared = null;
+  let log = null;
+
+  // Wait for shared utilities to load (Dependency Guard)
+  function waitForShared(callback, attempts = 0) {
+    if (window.OJSMetadataNormalizer && window.OJSMetadataNormalizer.Shared) {
+      Shared = window.OJSMetadataNormalizer.Shared;
+      log = (...args) => Shared.log("Keywords", ...args);
+      callback();
+    } else if (attempts < 20) { // Try for up to 2 seconds (100ms * 20)
+      setTimeout(() => waitForShared(callback, attempts + 1), 100);
+    } else {
+      console.error("[Keywords Normalizer] Shared utilities failed to load.");
+    }
+  }
+
   // Configuration
   const CONFIG = {
     // Selectors for keyword input fields
@@ -98,7 +115,7 @@
       const event = new Event("change", { bubbles: true });
       field.dispatchEvent(event);
 
-      console.log("[Keywords Normalizer] Processed legacy field:", {
+      log("Processed legacy field:", {
         original: rawValue,
         normalized: normalizedValue,
       });
@@ -137,8 +154,13 @@
             key: "Enter",
             keyCode: 13,
             which: 13,
-            bubbles: true,
+            bubbles: false, // Don't bubble to avoid unintended side effects
+            cancelable: false,
           });
+
+          // Mark as synthetic so other handlers can ignore it
+          Object.defineProperty(enterEvent, "synthetic", { value: true });
+
           input.dispatchEvent(enterEvent);
 
           // Clear for next keyword
@@ -148,7 +170,7 @@
         }, index * 50); // Stagger to ensure Vue processes each
       });
 
-      console.log("[Keywords Normalizer] Processed Vue tag input:", keywords);
+      log("Processed Vue tag input:", keywords);
     }
   }
 
@@ -170,7 +192,7 @@
       true
     ); // Use capture phase for better compatibility
 
-    console.log("[Keywords Normalizer] Legacy handlers attached");
+    log("Legacy handlers attached");
   }
 
   /**
@@ -188,14 +210,15 @@
               node.matches && node.matches(CONFIG.SELECTORS.vueTagContainer)
                 ? [node]
                 : node.querySelectorAll
-                ? Array.from(
+                  ? Array.from(
                     node.querySelectorAll(CONFIG.SELECTORS.vueTagContainer)
                   )
-                : [];
+                  : [];
 
             containers.forEach((container) => {
               const input = container.querySelector('input[type="text"]');
-              if (input) {
+              if (input && !input.dataset.keywordsNormalizerAttached) {
+                input.dataset.keywordsNormalizerAttached = "true";
                 input.addEventListener("blur", function () {
                   processVueTagInput(container);
                 });
@@ -212,49 +235,64 @@
       subtree: true,
     });
 
-    // Also handle existing Vue inputs on page load
-    setTimeout(function () {
-      document
-        .querySelectorAll(CONFIG.SELECTORS.vueTagContainer)
-        .forEach((container) => {
+    // Also handle existing Vue inputs on page load with a retry pattern
+    function checkExistingVueInputs(attempts = 0) {
+      const containers = document.querySelectorAll(CONFIG.SELECTORS.vueTagContainer);
+      
+      if (containers.length > 0) {
+        containers.forEach((container) => {
           const input = container.querySelector('input[type="text"]');
-          if (input) {
+          if (input && !input.dataset.keywordsNormalizerAttached) {
+            input.dataset.keywordsNormalizerAttached = "true";
             input.addEventListener("blur", function () {
               processVueTagInput(container);
             });
           }
         });
-    }, 1000);
+      } else if (attempts < 10) {
+        // Vue might not have rendered yet, try again
+        setTimeout(() => checkExistingVueInputs(attempts + 1), 500);
+      }
+    }
+    
+    checkExistingVueInputs();
 
-    console.log("[Keywords Normalizer] Vue handlers attached");
+    log("Vue handlers attached");
   }
 
   /**
    * Initialize the keywords normalizer
    */
   function init() {
-    // Wait for DOM to be fully loaded
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", init);
-      return;
-    }
+    waitForShared(function() {
+      // Wait for DOM to be fully loaded
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initCore);
+      } else {
+        initCore();
+      }
+    });
+  }
 
-    console.log("[Keywords Normalizer] Initializing...");
+  function initCore() {
+
+    log("Initializing...");
 
     // Attach handlers for both legacy and Vue inputs
     attachLegacyHandlers();
     attachVueHandlers();
 
-    console.log("[Keywords Normalizer] Initialization complete");
+    log("Initialization complete");
   }
 
   // Auto-initialize
   init();
 
-  // Expose for manual testing
-  window.OJSKeywordsNormalizer = {
+  // Export for manual testing and freeze to prevent tampering
+  // This needs to be executed immediately, though the logic is delayed
+  window.OJSKeywordsNormalizer = Object.freeze({
     normalize: normalizeKeywords,
     processField: processLegacyField,
     version: "1.0.0",
-  };
+  });
 })();

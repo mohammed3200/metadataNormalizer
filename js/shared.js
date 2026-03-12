@@ -42,12 +42,16 @@
         return "";
       }
 
-      // Create temporary element for safe HTML parsing
-      const temp = document.createElement("div");
-      temp.innerHTML = html;
-
-      // Extract text content (automatically strips tags)
-      return temp.textContent || temp.innerText || "";
+      try {
+        // DOMParser parses into a detached document — no scripts execute
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        return doc.body.textContent || "";
+      } catch (e) {
+        // Fallback for environments where DOMParser might fail
+        const temp = document.createElement("div");
+        temp.textContent = html;
+        return temp.textContent || "";
+      }
     },
 
     /**

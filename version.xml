@@ -3,8 +3,8 @@
 <version>
     <application>metadataNormalizer</application>
     <type>plugins.generic</type>
-    <release>1.0.0.0</release>
-    <date>2026-01-08</date>
+    <release>1.1.0.0</release>
+    <date>2026-03-12</date>
     <lazy-load>1</lazy-load>
     <class>APP\plugins\generic\metadataNormalizer\MetadataNormalizerPlugin</class>
 </version>

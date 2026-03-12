@@ -63,6 +63,8 @@ class MetadataNormalizerPlugin extends GenericPlugin
         $pluginPath = $this->getPluginPath();
         
         // Inject shared utilities first
+        // NOTE: OJS's addJavaScript() does not currently support Subresource Integrity (SRI) attributes natively.
+        // This is a known limitation that should be addressed if the platform adds support.
         $sharedUrl = $baseUrl . '/' . $pluginPath . '/js/shared.js';
         $templateMgr->addJavaScript(
             'metadataNormalizer-shared',
@@ -147,7 +149,10 @@ class MetadataNormalizerPlugin extends GenericPlugin
      */
     public function getInstallMigration()
     {
-        // No database changes required - client-side only
+        /**
+         * This plugin is client-side only and does not require any database changes.
+         * Returning null is intentional as no migration is needed.
+         */
         return null;
     }
 }

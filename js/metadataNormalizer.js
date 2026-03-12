@@ -12,14 +12,22 @@
 (function () {
   "use strict";
 
-  // Wait for shared utilities to load
-  if (!window.OJSMetadataNormalizer || !window.OJSMetadataNormalizer.Shared) {
-    console.error("[Metadata Normalizer] Shared utilities not loaded!");
-    return;
-  }
+  // State
+  let Shared = null;
+  let log = null;
 
-  const Shared = window.OJSMetadataNormalizer.Shared;
-  const log = (...args) => Shared.log("Title/Abstract", ...args);
+  // Wait for shared utilities to load (Dependency Guard)
+  function waitForShared(callback, attempts = 0) {
+    if (window.OJSMetadataNormalizer && window.OJSMetadataNormalizer.Shared) {
+      Shared = window.OJSMetadataNormalizer.Shared;
+      log = (...args) => Shared.log("Title/Abstract", ...args);
+      callback();
+    } else if (attempts < 20) { // Try for up to 2 seconds (100ms * 20)
+      setTimeout(() => waitForShared(callback, attempts + 1), 100);
+    } else {
+      console.error("[Metadata Normalizer] Shared utilities failed to load.");
+    }
+  }
 
   // Configuration
   const CONFIG = {
@@ -227,23 +235,26 @@
    * Initialize
    */
   function init() {
-    Shared.onReady(function () {
-      log("Initializing...");
-      attachHandlers();
-      handleTinyMCE();
-      log("Initialized");
+    waitForShared(function() {
+      Shared.onReady(function () {
+        log("Initializing...");
+        attachHandlers();
+        handleTinyMCE();
+        log("Initialized");
+      });
     });
   }
 
   // Auto-initialize
   init();
 
-  // Export for testing
-  window.OJSMetadataNormalizer.TitleAbstract = {
+  // Export for testing and freeze to prevent tampering
+  // This executes immediately, though logic is delayed
+  window.OJSMetadataNormalizer.TitleAbstract = Object.freeze({
     normalizeTitle: normalizeTitle,
     normalizeAbstract: normalizeAbstract,
     processTitle: processTitleField,
     processAbstract: processAbstractField,
     version: "1.0.0",
-  };
+  });
 })();
